@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroFare — Next-Gen Flight Fare Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      color: #e2e8f0;
+      background-color: #030b17;
+      background-image:
+        radial-gradient(circle at 18% 15%, rgba(14, 165, 233, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(16, 185, 129, 0.14) 0%, transparent 45%),
+        linear-gradient(155deg, rgba(2, 10, 24, 0.88) 0%, rgba(6, 24, 48, 0.80) 50%, rgba(2, 8, 20, 0.92) 100%),
+        url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=2074&q=80');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    .font-display { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .font-hud { font-family: 'Orbitron', sans-serif; }
+
+    /* Futuristic Dark Glass HUD Panels */
+    .hud-shell {
+      background: linear-gradient(160deg, rgba(10, 22, 42, 0.82) 0%, rgba(6, 15, 30, 0.88) 100%);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(56, 189, 248, 0.24);
+      box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .hud-tile {
+      background: rgba(15, 31, 56, 0.65);
+      border: 1px solid rgba(56, 189, 248, 0.18);
+      transition: all 0.22s ease;
+    }
+    .hud-tile:hover, .hud-tile:focus-within {
+      border-color: rgba(56, 189, 248, 0.55);
+      background: rgba(18, 38, 68, 0.85);
+      box-shadow: 0 0 24px -6px rgba(14, 165, 233, 0.35);
+    }
+
+    .hud-select, .hud-input {
+      color-scheme: dark;
+    }
+    .hud-select option {
+      background-color: #0b192c;
+      color: #f1f5f9;
+    }
+
+    .cyber-cta {
+      background: linear-gradient(95deg, #0284c7 0%, #06b6d4 50%, #2563eb 100%);
+      box-shadow: 0 0 28px rgba(6, 182, 212, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+    .cyber-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 38px rgba(6, 182, 212, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .neon-cyan-card {
+      background: linear-gradient(145deg, rgba(8, 36, 66, 0.9) 0%, rgba(6, 20, 40, 0.95) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.42);
+      box-shadow: 0 0 30px -10px rgba(56, 189, 248, 0.35);
+    }
+
+    .neon-emerald-card {
+      background: linear-gradient(145deg, rgba(6, 44, 42, 0.88) 0%, rgba(6, 22, 34, 0.95) 100%);
+      border: 1px solid rgba(52, 211, 153, 0.45);
+      box-shadow: 0 0 30px -10px rgba(16, 185, 129, 0.35);
+    }
+
+    .neon-amber-card {
+      background: linear-gradient(145deg, rgba(58, 36, 10, 0.88) 0%, rgba(24, 18, 12, 0.95) 100%);
+      border: 1px solid rgba(251, 191, 36, 0.5);
+      box-shadow: 0 0 30px -10px rgba(245, 158, 11, 0.3);
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-cyan-400 selection:text-slate-950">
+
+  <!-- FUTURISTIC TOP HUD NAVBAR -->
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 pt-5 pb-3 flex flex-wrap items-center justify-between gap-3">
+    <!-- Brand -->
+    <div class="flex items-center gap-3.5">
+      <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-400/40 flex items-center justify-center text-cyan-300 shadow-[0_0_20px_rgba(34,211,238,0.25)]">
+        <i class="fa-solid fa-plane-up text-xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="font-hud font-extrabold text-xl sm:text-2xl tracking-wider text-white">AERO<span class="text-cyan-400">FARE</span></span>
+          <span class="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-cyan-400/15 text-cyan-300 border border-cyan-400/35">
+            AI Telemetry
+          </span>
+        </div>
+        <p class="text-xs text-slate-400">Carrier-Specific Fare Analysis &amp; Live Market Radar</p>
+      </div>
+    </div>
+
+    <!-- Right Controls: Telemetry Clock + Admin Button (Admin Only) + Auth -->
+    <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+      <!-- Live Clock with Seconds -->
+      <div class="bg-slate-900/80 border border-cyan-500/30 px-4 py-2 rounded-full text-xs font-semibold flex items-center gap-2.5 shadow-inner">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-400"></span>
+        </span>
+        <span id="liveNavClock" class="font-hud text-cyan-300 tracking-widest">--:--:--</span>
+      </div>
+
+      <!-- Admin Technical Settings Button (Hidden unless Admin is logged in) -->
+      <button type="button" id="adminSettingsBtn" onclick="openAdminModal()" class="hidden bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-full shadow-[0_0_20px_rgba(251,191,36,0.4)] flex items-center gap-2 transition">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Admin ML Settings</span>
+        <span id="adminStatusDot" class="w-2 h-2 rounded-full bg-red-600"></span>
+      </button>
+
+      <!-- Guest Auth Buttons -->
+      <div id="guestAuthControls" class="flex items-center gap-2">
+        <button type="button" onclick="openAuthModal('login')" class="bg-slate-900/80 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold px-4 py-2 rounded-full transition">
+          Login
+        </button>
+        <button type="button" onclick="openAuthModal('register')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-full shadow-[0_0_18px_rgba(6,182,212,0.4)] transition">
+          Register
+        </button>
+      </div>
+
+      <!-- Logged-In User Pill -->
+      <div id="loggedInControls" class="hidden items-center gap-2 bg-slate-900/85 border border-cyan-500/30 text-white pl-3.5 pr-2 py-1.5 rounded-full text-xs">
+        <i class="fa-solid fa-user-astronaut text-cyan-400 text-sm"></i>
+        <span id="navUserName" class="font-semibold">User</span>
+        <span id="navAdminBadge" class="hidden text-[10px] font-extrabold uppercase bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded">ADMIN</span>
+        <button type="button" onclick="logoutUser()" class="ml-1 px-2.5 py-1 rounded-full bg-white/10 hover:bg-rose-500/80 text-[11px] font-semibold transition">
+          Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN FLIGHT COMMAND CONSOLE -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+    <div class="hud-shell rounded-3xl p-5 sm:p-8">
+
+      <!-- Saved Search History Bar -->
+      <div id="savedHistoryBar" class="hidden mb-6 pb-4 border-b border-slate-700/70">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-cyan-400 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left"></i> Quick Re-Scan History
+          </span>
+          <button type="button" onclick="clearUserHistory()" class="text-[11px] font-semibold text-slate-400 hover:text-rose-400 transition">Clear History</button>
+        </div>
+        <div id="savedHistoryChips" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- SEARCH FORM -->
+      <form id="flightSearchForm" onsubmit="handleFlightSearch(event)" class="space-y-6">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 class="font-display font-extrabold text-xl sm:text-2xl text-white tracking-tight">Carrier-Specific Fare Radar</h1>
+            <p class="text-xs text-slate-400 mt-0.5">Select your exact carrier, route, and departure date to compare live airline pricing against historical trends</p>
+          </div>
+          <!-- Passenger Multiplier (1 to 9) -->
+          <div class="flex items-center gap-2.5 bg-slate-900/90 px-4 py-2 rounded-2xl border border-cyan-500/30">
+            <i class="fa-solid fa-users text-cyan-400 text-xs"></i>
+            <label for="passengerCount" class="text-xs font-bold text-slate-300">Passengers:</label>
+            <select id="passengerCount" onchange="recalculatePassengerPrices()" class="hud-select bg-slate-800 border border-slate-600 rounded-lg px-2.5 py-1 text-xs font-extrabold text-cyan-300 focus:outline-none">
+              <option value="1" selected>1 Passenger</option>
+              <option value="2">2 Passengers</option>
+              <option value="3">3 Passengers</option>
+              <option value="4">4 Passengers</option>
+              <option value="5">5 Passengers</option>
+              <option value="6">6 Passengers</option>
+              <option value="7">7 Passengers</option>
+              <option value="8">8 Passengers</option>
+              <option value="9">9 Passengers</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Grid of 9 ML Model Inputs -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Source City -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="source_city" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              <i class="fa-solid fa-plane-departure mr-1"></i> Origin Sector
+            </label>
+            <select id="source_city" required class="hud-select w-full bg-transparent font-bold text-sm text-white focus:outline-none">
+              <option value="Delhi" selected>Delhi (DEL)</option>
+              <option value="Mumbai">Mumbai (BOM)</option>
+              <option value="Bangalore">Bangalore (BLR)</option>
+              <option value="Kolkata">Kolkata (CCU)</option>
+              <option value="Hyderabad">Hyderabad (HYD)</option>
+              <option value="Chennai">Chennai (MAA)</option>
+            </select>
+          </div>
+
+          <!-- Destination City -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="destination_city" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              <i class="fa-solid fa-plane-arrival mr-1"></i> Destination Sector
+            </label>
+            <select id="destination_city" required class="hud-select w-full bg-transparent font-bold text-sm text-white focus:outline-none">
+              <option value="Mumbai" selected>Mumbai (BOM)</option>
+              <option value="Delhi">Delhi (DEL)</option>
+              <option value="Bangalore">Bangalore (BLR)</option>
+              <option value="Kolkata">Kolkata (CCU)</option>
+              <option value="Hyderabad">Hyderabad (HYD)</option>
+              <option value="Chennai">Chennai (MAA)</option>
+            </select>
+          </div>
+
+          <!-- Travel Date -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="travel_date" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              <i class="fa-regular fa-calendar mr-1"></i> Departure Date
+            </label>
+            <input type="date" id="travel_date" required class="hud-input w-full bg-transparent font-bold text-sm text-white focus:outline-none" />
+          </div>
+
+          <!-- Airline -->
+          <div class="hud-tile p-4 rounded-2xl border-cyan-400/35">
+            <label for="airline" class="block text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-1.5">
+              <i class="fa-solid fa-jet-fighter-up mr-1"></i> Target Airline (Live + Analysed)
+            </label>
+            <select id="airline" required class="hud-select w-full bg-transparent font-bold text-sm text-white focus:outline-none">
+              <option value="Vistara" selected>Vistara</option>
+              <option value="IndiGo">IndiGo</option>
+              <option value="Air_India">Air India</option>
+              <option value="AirAsia">AirAsia</option>
+              <option value="SpiceJet">SpiceJet</option>
+              <option value="GO_FIRST">GO FIRST</option>
+            </select>
+          </div>
+
+          <!-- Cabin Class -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="flight_class" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              <i class="fa-solid fa-couch mr-1"></i> Cabin Class
+            </label>
+            <select id="flight_class" required class="hud-select w-full bg-transparent font-bold text-sm text-white focus:outline-none">
+              <option value="Economy" selected>Economy</option>
+              <option value="Business">Business</option>
+            </select>
+          </div>
+
+          <!-- Stops -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="stops_num" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              <i class="fa-solid fa-route mr-1"></i> Flight Stops
+            </label>
+            <select id="stops_num" required class="hud-select w-full bg-transparent font-bold text-sm text-white focus:outline-none">
+              <option value="0" selected>Non-stop (0 Stops)</option>
+              <option value="1">1 Stop</option>
+              <option value="2">2+ Stops</option>
+            </select>
+          </div>
+
+          <!-- Departure Time Slot -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="departure_time" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              Departure Window
+            </label>
+            <select id="departure_time" required class="hud-select w-full bg-transparent font-bold text-sm text-white focus:outline-none">
+              <option value="Early_Morning">Early Morning (4 AM – 8 AM)</option>
+              <option value="Morning" selected>Morning (8 AM – 12 PM)</option>
+              <option value="Afternoon">Afternoon (12 PM – 4 PM)</option>
+              <option value="Evening">Evening (4 PM – 8 PM)</option>
+              <option value="Night">Night (8 PM – 12 AM)</option>
+              <option value="Late_Night">Late Night (12 AM – 4 AM)</option>
+            </select>
+          </div>
+
+          <!-- Arrival Time Slot -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="arrival_time" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              Arrival Window
+            </label>
+            <select id="arrival_time" required class="hud-select w-full bg-transparent font-bold text-sm text-white focus:outline-none">
+              <option value="Early_Morning">Early Morning</option>
+              <option value="Morning">Morning</option>
+              <option value="Afternoon">Afternoon</option>
+              <option value="Evening" selected>Evening</option>
+              <option value="Night">Night</option>
+              <option value="Late_Night">Late Night</option>
+            </select>
+          </div>
+
+          <!-- Flight Duration (Minutes) -->
+          <div class="hud-tile p-4 rounded-2xl">
+            <label for="duration_mins" class="block text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1.5">
+              Est. Flight Duration (Mins)
+            </label>
+            <input type="number" id="duration_mins" value="140" min="30" max="1500" required class="hud-input w-full bg-transparent font-bold text-sm text-white focus:outline-none" />
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-center pt-2">
+          <button type="submit" id="searchSubmitBtn" class="cyber-cta text-white font-hud font-bold text-xs sm:text-sm uppercase tracking-widest px-10 py-4 rounded-full transition flex items-center gap-3 cursor-pointer">
+            <i class="fa-solid fa-radar"></i>
+            <span>Scan Carrier Live &amp; Analysed Fare</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- STATUS / SETUP NOTICE BANNER -->
+      <div id="systemNoticeBanner" class="hidden mt-6 p-4 rounded-2xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-100 text-xs sm:text-sm flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-satellite-dish text-cyan-400 text-lg"></i>
+          <span id="systemNoticeText">Fare engine is initializing. Please check back shortly.</span>
+        </div>
+        <button type="button" id="noticeAdminShortcut" onclick="openAdminModal()" class="hidden px-4 py-1.5 rounded-full bg-amber-400 text-slate-950 font-extrabold text-xs">
+          Configure Server URL
+        </button>
+      </div>
+
+      <!-- LOADING SPINNER -->
+      <div id="loadingIndicator" class="hidden mt-6 p-5 rounded-2xl bg-slate-900/90 border border-cyan-500/40 text-cyan-200 flex items-center justify-center gap-3">
+        <i class="fa-solid fa-circle-notch fa-spin text-cyan-400 text-xl"></i>
+        <span class="text-sm font-semibold tracking-wide">Scanning live airline schedules &amp; computing historical baseline...</span>
+      </div>
+
+      <!-- RESULTS DASHBOARD -->
+      <section id="resultsDashboard" class="hidden mt-8 pt-7 border-t border-slate-700/70 space-y-6">
+
+        <!-- FUTURISTIC FLIGHT TELEMETRY RIBBON -->
+        <div class="rounded-2xl p-4 sm:p-5 bg-slate-900/80 border border-slate-700/80 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div>
+              <div class="text-[10px] uppercase tracking-widest text-slate-400">Origin</div>
+              <div id="hudOriginCity" class="font-hud font-bold text-lg sm:text-xl text-white">DELHI</div>
+            </div>
+            <div class="flex items-center gap-2 text-cyan-400 px-2">
+              <span class="h-[1px] w-8 sm:w-14 bg-gradient-to-r from-transparent to-cyan-400"></span>
+              <i class="fa-solid fa-plane text-sm"></i>
+              <span class="h-[1px] w-8 sm:w-14 bg-gradient-to-l from-transparent to-cyan-400"></span>
+            </div>
+            <div>
+              <div class="text-[10px] uppercase tracking-widest text-slate-400">Destination</div>
+              <div id="hudDestCity" class="font-hud font-bold text-lg sm:text-xl text-white">MUMBAI</div>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <span id="summaryRouteMeta" class="text-xs font-semibold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+              Vistara • Economy • Non-stop
+            </span>
+            <span id="daysLeftBadge" class="px-3.5 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 font-hud text-xs font-bold">
+              T-10 DAYS
+            </span>
+          </div>
+        </div>
+
+        <!-- DUAL PRICE CARDS: Carrier Analysed Price vs. Carrier Live Price -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <!-- Card 1: Analysed Price (Historical Estimate for Selected Carrier) -->
+          <div class="neon-cyan-card rounded-2xl p-6 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-2">
+              <span id="analysedCardHeader" class="text-xs font-bold uppercase tracking-wider text-cyan-300">Analysed Price (Historical Estimate)</span>
+              <span class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-cyan-400/15 text-cyan-300 border border-cyan-400/35">HISTORICAL BASELINE</span>
+            </div>
+            <div id="analysedFareValue" class="font-hud font-extrabold text-3xl sm:text-4xl text-white mt-3">₹0</div>
+            <p id="analysedFareSub" class="text-xs text-slate-300 mt-2">Historical baseline for selected carrier</p>
+          </div>
+
+          <!-- Card 2: Live Market Price Viewer (For Selected Carrier) -->
+          <div id="livePriceCard" class="neon-emerald-card rounded-2xl p-6 flex flex-col justify-between">
+            <div class="flex items-center justify-between gap-2">
+              <span id="liveCardHeader" class="text-xs font-bold uppercase tracking-wider text-emerald-300">Live Market Price Viewer</span>
+              <span id="liveStatusPill" class="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/40">LIVE CARRIER FARE</span>
+            </div>
+
+            <!-- State A: Selected Airline Live Price Available -->
+            <div id="liveAvailableView" class="mt-2">
+              <div id="liveFareValue" class="font-hud font-extrabold text-3xl sm:text-4xl text-white">₹0</div>
+              <p id="liveFareSub" class="text-xs text-emerald-200/80 mt-2">Lowest real-time fare for this airline on selected date</p>
+            </div>
+
+            <!-- State B: Selected Airline Has No Flight on This Date -->
+            <div id="liveUnavailableView" class="hidden mt-3 p-3.5 rounded-xl bg-amber-500/15 border border-amber-400/40">
+              <div class="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                <i class="fa-solid fa-calendar-xmark text-amber-400"></i>
+                <span id="unavailableAirlineMsg">No flight available on this date — Change date</span>
+              </div>
+              <p id="altCarrierHint" class="hidden text-[11px] text-amber-200/90 mt-1"></p>
+              <button type="button" onclick="shiftDateNextDay()" class="mt-2.5 px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold text-xs transition">
+                Shift to Next Date (+1 Day)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Deal Advisory Banner -->
+        <div id="verdictBanner" class="p-4 rounded-2xl bg-cyan-950/70 border border-cyan-500/40 text-cyan-100 font-semibold text-sm flex items-center gap-3">
+          <i class="fa-solid fa-sparkles text-cyan-400 text-lg"></i>
+          <span id="verdictBannerText">Comparing live carrier fare against historical analysed baseline...</span>
+        </div>
+
+        <!-- 3 INTERACTIVE ANALYTICS CHARTS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <!-- Chart 1: Live vs Analysed -->
+          <div class="bg-slate-900/85 rounded-2xl p-4 border border-slate-700/80">
+            <h3 class="font-display font-bold text-sm text-white mb-0.5">Live vs. Analysed Carrier Fare</h3>
+            <p class="text-[11px] text-slate-400 mb-3">Selected airline comparison (₹)</p>
+            <div class="h-56"><canvas id="chartLiveVsAnalysed"></canvas></div>
+          </div>
+
+          <!-- Chart 2: All-Airline Analysed Comparison -->
+          <div class="bg-slate-900/85 rounded-2xl p-4 border border-slate-700/80">
+            <h3 class="font-display font-bold text-sm text-white mb-0.5">All-Airline Fare Comparison</h3>
+            <p class="text-[11px] text-slate-400 mb-3">Analysed fare across 6 carriers (₹)</p>
+            <div class="h-56"><canvas id="chartAirlines"></canvas></div>
+          </div>
+
+          <!-- Chart 3: 45-Day Booking Window Trend -->
+          <div class="bg-slate-900/85 rounded-2xl p-4 border border-slate-700/80">
+            <h3 class="font-display font-bold text-sm text-white mb-0.5">45-Day Booking Window Trend</h3>
+            <p class="text-[11px] text-slate-400 mb-3">Advance booking price curve (₹)</p>
+            <div class="h-56"><canvas id="chartBookingTrend"></canvas></div>
+          </div>
+        </div>
+
+        <!-- LIVE FLIGHTS TABLE -->
+        <div id="liveFlightsTableWrapper" class="hidden bg-slate-900/85 rounded-2xl border border-slate-700/80 overflow-hidden">
+          <div class="px-5 py-3.5 bg-slate-800/80 border-b border-slate-700 flex items-center justify-between">
+            <h3 class="font-display font-bold text-sm text-white">Live Market Flights on Selected Date</h3>
+            <span class="text-xs text-cyan-400">Selected carrier highlighted</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-950/60 text-slate-400 uppercase font-bold">
+                <tr>
+                  <th class="px-5 py-3">Airline</th>
+                  <th class="px-5 py-3">Stops</th>
+                  <th class="px-5 py-3">Duration</th>
+                  <th class="px-5 py-3 text-right">Live Fare</th>
+                </tr>
+              </thead>
+              <tbody id="liveFlightsTableBody" class="divide-y divide-slate-800"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==================== LOGIN / REGISTER MODAL ==================== -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-cyan-500/35 text-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+      <button type="button" onclick="closeAuthModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex gap-2 mb-5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <button type="button" id="tabLoginBtn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-lg text-xs font-bold bg-cyan-500 text-slate-950 shadow-sm">Login</button>
+        <button type="button" id="tabRegisterBtn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-lg text-xs font-bold text-slate-400">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Email or User ID</label>
+          <input type="text" id="loginIdentifier" required placeholder="Enter your email or user ID" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <p id="loginErrorMsg" class="hidden text-xs font-semibold text-rose-400"></p>
+        <button type="submit" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-sm transition">
+          Sign In
+        </button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="hidden space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Full Name</label>
+          <input type="text" id="regName" required placeholder="Your full name" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Email / Login ID</label>
+          <input type="text" id="regEmail" required placeholder="you@example.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Create Password</label>
+          <input type="password" id="regPassword" required minlength="4" placeholder="Create password" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white focus:outline-none focus:border-cyan-400" />
+        </div>
+        <p id="regErrorMsg" class="hidden text-xs font-semibold text-rose-400"></p>
+        <button type="submit" class="w-full py-3 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-extrabold text-sm transition">
+          Create Account
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== ADMIN TECHNICAL SETTINGS MODAL (ADMIN ONLY) ==================== -->
+  <div id="adminSettingsModal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 text-white border border-amber-400/40 rounded-3xl max-w-xl w-full p-6 shadow-2xl relative">
+      <button type="button" onclick="closeAdminModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="flex items-center gap-2.5 mb-4">
+        <span class="w-9 h-9 rounded-xl bg-amber-400/20 text-amber-300 flex items-center justify-center">
+          <i class="fa-solid fa-server"></i>
+        </span>
+        <div>
+          <h3 class="font-display font-extrabold text-lg">Admin ML Engine Integration</h3>
+          <p class="text-xs text-slate-400">Visible only to Administrator (Mostafizur Rahman)</p>
+        </div>
+      </div>
+
+      <form onsubmit="testAndSaveAdminApi(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">FastAPI Base Server URL (Local IP or Cloudflare Tunnel)</label>
+          <input type="url" id="adminApiUrlInput" placeholder="http://127.0.0.1:8000" required class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-sm text-white focus:outline-none focus:border-amber-400" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1">Target Inference Endpoint</label>
+          <select id="adminEndpointSelect" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-600 text-sm text-white focus:outline-none">
+            <option value="/analyze" selected>POST /analyze (Carrier Live + Analysed ML)</option>
+            <option value="/predict">POST /predict (Historical ML Model Only)</option>
+          </select>
+        </div>
+
+        <div id="adminConnectionStatus" class="text-xs font-semibold text-cyan-300 bg-slate-800/80 px-3.5 py-2.5 rounded-xl border border-slate-700">
+          Status: Ready to test connection
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <button type="button" onclick="disconnectAdminApi()" class="px-4 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold border border-rose-500/30">
+            Disconnect API
+          </button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-extrabold shadow-lg">
+            Test &amp; Save Connection
+          </button>
+        </div>
+      </form>
+
+      <!-- Live JSON Payload Inspector -->
+      <div class="mt-5 pt-4 border-t border-slate-800">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Last JSON Request / Response Inspector</div>
+        <pre id="adminJsonInspector" class="bg-slate-950 text-emerald-300 text-[11px] p-3 rounded-xl max-h-36 overflow-auto font-mono">No API requests executed in this session yet.</pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== 1. STORAGE KEYS & SEED ADMIN ACCOUNT ====================
+    const USERS_KEY = "aerofare_users_v1";
+    const SESSION_KEY = "aerofare_session_v1";
+    const API_URL_KEY = "aerofare_api_url";
+    const API_ENDPOINT_KEY = "aerofare_api_endpoint";
+    const HISTORY_PREFIX = "aerofare_history_";
+
+    const DEFAULT_ADMIN = {
+      name: "Mostafizur Rahman",
+      email: "admin@aerofare.com",
+      password: "Munna123#",
+      role: "admin"
+    };
+
+    let lastPredictionData = null;
+    let charts = { liveVsAnalysed: null, airlines: null, bookingTrend: null };
+
+    function ensureSeedUsers() {
+      let users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+      const adminIndex = users.findIndex(u => u.email.toLowerCase() === DEFAULT_ADMIN.email.toLowerCase());
+      if (adminIndex === -1) {
+        users.push(DEFAULT_ADMIN);
+      } else {
+        users[adminIndex] = DEFAULT_ADMIN;
+      }
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+    }
+
+    // ==================== 2. INITIALIZATION ====================
+    window.addEventListener("DOMContentLoaded", () => {
+      ensureSeedUsers();
+      startNavClock();
+      setDefaultTravelDate();
+      restoreSessionUI();
+      updateAdminConnectionBadge();
+    });
+
+    function startNavClock() {
+      const clockEl = document.getElementById("liveNavClock");
+      const tick = () => {
+        const now = new Date();
+        clockEl.textContent = now.toLocaleTimeString("en-GB", { hour12: false });
+      };
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    function setDefaultTravelDate() {
+      const dateInput = document.getElementById("travel_date");
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      dateInput.min = tomorrow.toISOString().split("T")[0];
+      dateInput.value = nextWeek.toISOString().split("T")[0];
+    }
+
+    // ==================== 3. AUTHENTICATION & ROLE ACCESS ====================
+    function getCurrentUser() {
+      try {
+        return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+      } catch {
+        return null;
+      }
+    }
+
+    function restoreSessionUI() {
+      const user = getCurrentUser();
+      const guestDiv = document.getElementById("guestAuthControls");
+      const loggedDiv = document.getElementById("loggedInControls");
+      const adminBtn = document.getElementById("adminSettingsBtn");
+      const adminBadge = document.getElementById("navAdminBadge");
+      const noticeShortcut = document.getElementById("noticeAdminShortcut");
+
+      if (user) {
+        guestDiv.classList.add("hidden");
+        loggedDiv.classList.remove("hidden");
+        loggedDiv.classList.add("flex");
+        document.getElementById("navUserName").textContent = user.name;
+
+        const isAdmin = user.role === "admin";
+        adminBtn.classList.toggle("hidden", !isAdmin);
+        adminBadge.classList.toggle("hidden", !isAdmin);
+        noticeShortcut.classList.toggle("hidden", !isAdmin);
+        renderUserHistory();
+      } else {
+        guestDiv.classList.remove("hidden");
+        loggedDiv.classList.add("hidden");
+        loggedDiv.classList.remove("flex");
+        adminBtn.classList.add("hidden");
+        adminBadge.classList.add("hidden");
+        noticeShortcut.classList.add("hidden");
+        document.getElementById("savedHistoryBar").classList.add("hidden");
+      }
+    }
+
+    function openAuthModal(tab = "login") {
+      document.getElementById("authModal").classList.remove("hidden");
+      switchAuthTab(tab);
+    }
+
+    function closeAuthModal() {
+      document.getElementById("authModal").classList.add("hidden");
+      document.getElementById("loginErrorMsg").classList.add("hidden");
+      document.getElementById("regErrorMsg").classList.add("hidden");
+    }
+
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById("loginForm");
+      const regForm = document.getElementById("registerForm");
+      const tabLogin = document.getElementById("tabLoginBtn");
+      const tabReg = document.getElementById("tabRegisterBtn");
+
+      if (tab === "login") {
+        loginForm.classList.remove("hidden");
+        regForm.classList.add("hidden");
+        tabLogin.className = "flex-1 py-2 rounded-lg text-xs font-bold bg-cyan-500 text-slate-950 shadow-sm";
+        tabReg.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-400";
+      } else {
+        regForm.classList.remove("hidden");
+        loginForm.classList.add("hidden");
+        tabReg.className = "flex-1 py-2 rounded-lg text-xs font-bold bg-cyan-500 text-slate-950 shadow-sm";
+        tabLogin.className = "flex-1 py-2 rounded-lg text-xs font-bold text-slate-400";
+      }
+    }
+
+    function handleLoginSubmit(event) {
+      event.preventDefault();
+      const id = document.getElementById("loginIdentifier").value.trim().toLowerCase();
+      const pwd = document.getElementById("loginPassword").value;
+      const errEl = document.getElementById("loginErrorMsg");
+
+      const users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+      const matched = users.find(u => u.email.toLowerCase() === id && u.password === pwd);
+
+      if (!matched) {
+        errEl.textContent = "Invalid Email/Login ID or Password. Please try again.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        name: matched.name,
+        email: matched.email,
+        role: matched.role || "customer"
+      }));
+
+      closeAuthModal();
+      restoreSessionUI();
+    }
+
+    function handleRegisterSubmit(event) {
+      event.preventDefault();
+      const name = document.getElementById("regName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const errEl = document.getElementById("regErrorMsg");
+
+      const users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+      if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+        errEl.textContent = "An account with this Email/ID already exists.";
+        errEl.classList.remove("hidden");
+        return;
+      }
+
+      const newUser = { name, email, password, role: "customer" };
+      users.push(newUser);
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ name, email, role: "customer" }));
+
+      closeAuthModal();
+      restoreSessionUI();
+    }
+
+    function logoutUser() {
+      localStorage.removeItem(SESSION_KEY);
+      restoreSessionUI();
+    }
+
+    // ==================== 4. ADMIN TECHNICAL SETTINGS ====================
+    function openAdminModal() {
+      const user = getCurrentUser();
+      if (!user || user.role !== "admin") return;
+
+      document.getElementById("adminApiUrlInput").value = localStorage.getItem(API_URL_KEY) || "http://127.0.0.1:8000";
+      document.getElementById("adminEndpointSelect").value = localStorage.getItem(API_ENDPOINT_KEY) || "/analyze";
+      document.getElementById("adminSettingsModal").classList.remove("hidden");
+    }
+
+    function closeAdminModal() {
+      document.getElementById("adminSettingsModal").classList.add("hidden");
+    }
+
+    function updateAdminConnectionBadge() {
+      const savedUrl = localStorage.getItem(API_URL_KEY);
+      const dot = document.getElementById("adminStatusDot");
+      if (dot) {
+        dot.className = savedUrl ? "w-2 h-2 rounded-full bg-emerald-400" : "w-2 h-2 rounded-full bg-rose-500";
+      }
+    }
+
+    async function testAndSaveAdminApi(event) {
+      if (event) event.preventDefault();
+
+      const rawUrl = document.getElementById("adminApiUrlInput").value.trim();
+      const cleanUrl = rawUrl.replace(/\/+$/, "");
+      const endpoint = document.getElementById("adminEndpointSelect").value;
+      const statusEl = document.getElementById("adminConnectionStatus");
+
+      if (!cleanUrl) {
+        statusEl.textContent = "Please enter a valid server URL.";
+        return;
+      }
+
+      statusEl.textContent = "Testing connection to server...";
+
+      try {
+        const res = await fetch(`${cleanUrl}/`, { method: "GET" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        localStorage.setItem(API_URL_KEY, cleanUrl);
+        localStorage.setItem(API_ENDPOINT_KEY, endpoint);
+        updateAdminConnectionBadge();
+
+        statusEl.textContent = `Connected: ${data.status || "OK"} — Returning to console...`;
+        document.getElementById("systemNoticeBanner").classList.add("hidden");
+
+        setTimeout(() => {
+          closeAdminModal();
+        }, 550);
+      } catch (err) {
+        statusEl.textContent = `Connection failed (${err.message}). Check IP/Tunnel URL.`;
+      }
+    }
+
+    function disconnectAdminApi() {
+      localStorage.removeItem(API_URL_KEY);
+      updateAdminConnectionBadge();
+      document.getElementById("adminConnectionStatus").textContent = "Disconnected. No active ML server URL configured.";
+    }
+
+    // ==================== 5. SAVED SEARCH HISTORY ====================
+    function saveSearchToHistory(payload) {
+      const user = getCurrentUser();
+      if (!user) return;
+      const key = HISTORY_PREFIX + user.email.toLowerCase();
+      let list = JSON.parse(localStorage.getItem(key) || "[]");
+      list = list.filter(item => !(
+        item.source_city === payload.source_city &&
+        item.destination_city === payload.destination_city &&
+        item.travel_date === payload.travel_date &&
+        item.airline === payload.airline
+      ));
+      list.unshift(payload);
+      localStorage.setItem(key, JSON.stringify(list.slice(0, 6)));
+      renderUserHistory();
+    }
+
+    function renderUserHistory() {
+      const user = getCurrentUser();
+      const bar = document.getElementById("savedHistoryBar");
+      const chips = document.getElementById("savedHistoryChips");
+      if (!user) {
+        bar.classList.add("hidden");
+        return;
+      }
+      const list = JSON.parse(localStorage.getItem(HISTORY_PREFIX + user.email.toLowerCase()) || "[]");
+      if (!list.length) {
+        bar.classList.add("hidden");
+        return;
+      }
+      bar.classList.remove("hidden");
+      chips.innerHTML = list.map((item, idx) => `
+        <button type="button" onclick="applySavedSearch(${idx})" class="px-3.5 py-1.5 rounded-full bg-slate-800/90 hover:bg-cyan-950 border border-cyan-500/30 text-xs font-semibold text-cyan-200 flex items-center gap-2 transition">
+          <span>${item.source_city} → ${item.destination_city}</span>
+          <span class="text-slate-500">|</span>
+          <span class="text-slate-300">${item.travel_date}</span>
+          <span class="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full font-bold">${item.airline.replace("_", " ")}</span>
+        </button>
+      `).join("");
+    }
+
+    function applySavedSearch(index) {
+      const user = getCurrentUser();
+      if (!user) return;
+      const list = JSON.parse(localStorage.getItem(HISTORY_PREFIX + user.email.toLowerCase()) || "[]");
+      const item = list[index];
+      if (!item) return;
+
+      document.getElementById("source_city").value = item.source_city;
+      document.getElementById("destination_city").value = item.destination_city;
+      document.getElementById("travel_date").value = item.travel_date;
+      document.getElementById("airline").value = item.airline;
+      document.getElementById("flight_class").value = item.flight_class;
+      document.getElementById("stops_num").value = String(item.stops_num);
+      document.getElementById("departure_time").value = item.departure_time;
+      document.getElementById("arrival_time").value = item.arrival_time;
+      document.getElementById("duration_mins").value = item.duration_mins;
+
+      handleFlightSearch(new Event("submit"));
+    }
+
+    function clearUserHistory() {
+      const user = getCurrentUser();
+      if (!user) return;
+      localStorage.removeItem(HISTORY_PREFIX + user.email.toLowerCase());
+      renderUserHistory();
+    }
+
+    // ==================== 6. FLIGHT SEARCH & API CALL ====================
+    async function handleFlightSearch(event) {
+      if (event) event.preventDefault();
+
+      const source = document.getElementById("source_city").value;
+      const dest = document.getElementById("destination_city").value;
+      const noticeBanner = document.getElementById("systemNoticeBanner");
+      const noticeText = document.getElementById("systemNoticeText");
+
+      if (source === dest) {
+        noticeText.textContent = "Origin and Destination sectors must be different.";
+        noticeBanner.classList.remove("hidden");
+        return;
+      }
+
+      const baseUrl = (localStorage.getItem(API_URL_KEY) || "").trim().replace(/\/+$/, "");
+      const endpoint = localStorage.getItem(API_ENDPOINT_KEY) || "/analyze";
+
+      if (!baseUrl) {
+        const user = getCurrentUser();
+        noticeText.textContent = (user && user.role === "admin")
+          ? "No ML server URL configured yet. Click 'Configure Server URL' to connect your FastAPI backend."
+          : "Fare analysis engine is not connected yet. Please contact the administrator.";
+        noticeBanner.classList.remove("hidden");
+        return;
+      }
+
+      noticeBanner.classList.add("hidden");
+
+      const payload = {
+        airline: document.getElementById("airline").value,
+        source_city: source,
+        destination_city: dest,
+        departure_time: document.getElementById("departure_time").value,
+        arrival_time: document.getElementById("arrival_time").value,
+        flight_class: document.getElementById("flight_class").value,
+        stops_num: parseInt(document.getElementById("stops_num").value, 10),
+        duration_mins: parseInt(document.getElementById("duration_mins").value, 10),
+        travel_date: document.getElementById("travel_date").value
+      };
+
+      saveSearchToHistory(payload);
+
+      const loader = document.getElementById("loadingIndicator");
+      loader.classList.remove("hidden");
+
+      try {
+        const response = await fetch(`${baseUrl}${endpoint}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        document.getElementById("adminJsonInspector").textContent = JSON.stringify({ request: payload, response: data }, null, 2);
+
+        if (!response.ok) {
+          throw new Error(data.detail ? JSON.stringify(data.detail) : `Server error ${response.status}`);
+        }
+
+        lastPredictionData = { payload, data };
+        renderResultsDashboard();
+      } catch (err) {
+        noticeText.textContent = `Unable to reach fare service: ${err.message}`;
+        noticeBanner.classList.remove("hidden");
+      } finally {
+        loader.classList.add("hidden");
+      }
+    }
+
+    function shiftDateNextDay() {
+      const input = document.getElementById("travel_date");
+      const current = new Date(input.value + "T00:00:00");
+      current.setDate(current.getDate() + 1);
+      input.value = current.toISOString().split("T")[0];
+      handleFlightSearch(new Event("submit"));
+    }
+
+    function recalculatePassengerPrices() {
+      if (lastPredictionData) {
+        renderResultsDashboard();
+      }
+    }
+
+    // ==================== 7. RENDER DASHBOARD & 3 CHARTS ====================
+    function formatINR(val) {
+      return "₹" + Math.round(Number(val)).toLocaleString("en-IN");
+    }
+
+    function normalizeAirlineName(str) {
+      return (str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+
+    function renderResultsDashboard() {
+      if (!lastPredictionData) return;
+      const { payload, data } = lastPredictionData;
+      const pax = parseInt(document.getElementById("passengerCount").value, 10) || 1;
+      const airlineClean = payload.airline.replace("_", " ");
+
+      const dashboard = document.getElementById("resultsDashboard");
+      dashboard.classList.remove("hidden");
+
+      const stopsLabel = payload.stops_num === 0 ? "Non-stop" : payload.stops_num === 1 ? "1 Stop" : "2+ Stops";
+      document.getElementById("hudOriginCity").textContent = payload.source_city.toUpperCase();
+      document.getElementById("hudDestCity").textContent = payload.destination_city.toUpperCase();
+      document.getElementById("summaryRouteMeta").textContent = `${airlineClean} • ${payload.flight_class} • ${stopsLabel} • ${payload.travel_date} • ${pax} Pax`;
+      document.getElementById("daysLeftBadge").textContent = `T-${data.days_left ?? data.days_left_calculated ?? 1} DAYS`;
+
+      // Analysed Price Card (Specific to Selected Airline)
+      const unitAnalysed = Number(data.ml_predicted_price ?? data.predicted_price ?? 0);
+      const totalAnalysed = unitAnalysed * pax;
+      document.getElementById("analysedCardHeader").textContent = `${airlineClean} Analysed Price`;
+      document.getElementById("analysedFareValue").textContent = formatINR(totalAnalysed);
+      document.getElementById("analysedFareSub").textContent = pax > 1
+        ? `${formatINR(unitAnalysed)} per passenger × ${pax} passengers (${airlineClean} historical baseline)`
+        : `Historical baseline for ${airlineClean} on this route`;
+
+      // Live Price Card (Specific to Selected Airline)
+      const liveAvailDiv = document.getElementById("liveAvailableView");
+      const liveUnavailDiv = document.getElementById("liveUnavailableView");
+      const livePill = document.getElementById("liveStatusPill");
+      const liveCard = document.getElementById("livePriceCard");
+      document.getElementById("liveCardHeader").textContent = `${airlineClean} Live Market Price`;
+
+      const hasLive = data.live_lowest_price !== null && data.live_lowest_price !== undefined;
+
+      if (hasLive) {
+        const unitLive = Number(data.live_lowest_price);
+        const totalLive = unitLive * pax;
+        liveAvailDiv.classList.remove("hidden");
+        liveUnavailDiv.classList.add("hidden");
+        liveCard.className = "neon-emerald-card rounded-2xl p-6 flex flex-col justify-between";
+        livePill.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-400/40";
+        livePill.textContent = "LIVE CARRIER FARE";
+        document.getElementById("liveFareValue").textContent = formatINR(totalLive);
+        document.getElementById("liveFareSub").textContent = pax > 1
+          ? `${formatINR(unitLive)} per passenger × ${pax} passengers (${airlineClean} live)`
+          : `Lowest live ${airlineClean} fare on ${payload.travel_date}`;
+      } else {
+        liveAvailDiv.classList.add("hidden");
+        liveUnavailDiv.classList.remove("hidden");
+        liveCard.className = "neon-amber-card rounded-2xl p-6 flex flex-col justify-between";
+        livePill.className = "text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40";
+        livePill.textContent = "CARRIER UNAVAILABLE";
+        document.getElementById("unavailableAirlineMsg").textContent = `No ${airlineClean} flight available on this date — Change date`;
+
+        const altHint = document.getElementById("altCarrierHint");
+        if (data.market_cheapest_offer && data.market_cheapest_offer.airline) {
+          altHint.textContent = `Alternative available: ${data.market_cheapest_offer.airline} from ${formatINR(data.market_cheapest_offer.live_price * pax)}`;
+          altHint.classList.remove("hidden");
+        } else {
+          altHint.classList.add("hidden");
+        }
+      }
+
+      // Verdict Banner
+      const verdictBanner = document.getElementById("verdictBanner");
+      const verdictText = document.getElementById("verdictBannerText");
+      verdictText.textContent = data.ai_verdict || "Historical fare analysis complete.";
+
+      if (hasLive && typeof data.price_difference_percent === "number") {
+        if (data.price_difference_percent <= -10) {
+          verdictBanner.className = "p-4 rounded-2xl bg-emerald-950/75 border border-emerald-400/45 text-emerald-200 font-semibold text-sm flex items-center gap-3";
+        } else if (data.price_difference_percent >= 10) {
+          verdictBanner.className = "p-4 rounded-2xl bg-rose-950/75 border border-rose-400/45 text-rose-200 font-semibold text-sm flex items-center gap-3";
+        } else {
+          verdictBanner.className = "p-4 rounded-2xl bg-cyan-950/75 border border-cyan-400/45 text-cyan-200 font-semibold text-sm flex items-center gap-3";
+        }
+      } else {
+        verdictBanner.className = "p-4 rounded-2xl bg-amber-950/75 border border-amber-400/45 text-amber-200 font-semibold text-sm flex items-center gap-3";
+      }
+
+      // Live Flights Table
+      const tableWrapper = document.getElementById("liveFlightsTableWrapper");
+      const tableBody = document.getElementById("liveFlightsTableBody");
+      const selectedNorm = normalizeAirlineName(airlineClean);
+
+      if (Array.isArray(data.top_5_live_flights) && data.top_5_live_flights.length > 0) {
+        tableWrapper.classList.remove("hidden");
+        tableBody.innerHTML = data.top_5_live_flights.map(f => {
+          const rowNorm = normalizeAirlineName(f.airline);
+          const isMatch = rowNorm.includes(selectedNorm) || selectedNorm.includes(rowNorm);
+          return `
+            <tr class="${isMatch ? "bg-cyan-950/50" : "hover:bg-slate-800/50"}">
+              <td class="px-5 py-3 font-bold text-white flex items-center gap-2">
+                <span>${f.airline}</span>
+                ${isMatch ? '<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-400/20 text-cyan-300 border border-cyan-400/40">SELECTED</span>' : ''}
+              </td>
+              <td class="px-5 py-3 text-slate-300">${f.stops_num === 0 ? "Non-stop" : f.stops_num === 1 ? "1 Stop" : "2+ Stops"}</td>
+              <td class="px-5 py-3 text-slate-300">${f.duration_mins} mins</td>
+              <td class="px-5 py-3 text-right font-hud font-bold ${isMatch ? "text-cyan-300" : "text-emerald-400"}">${formatINR(f.live_price * pax)}</td>
+            </tr>
+          `;
+        }).join("");
+      } else {
+        tableWrapper.classList.add("hidden");
+      }
+
+      renderCharts(data, airlineClean, pax, hasLive);
+    }
+
+    function renderCharts(data, airlineClean, pax, hasLive) {
+      Chart.defaults.color = "#94a3b8";
+      Chart.defaults.borderColor = "rgba(148, 163, 184, 0.14)";
+
+      // 1. Live vs Analysed Bar Chart (Specific to Selected Carrier)
+      if (charts.liveVsAnalysed) charts.liveVsAnalysed.destroy();
+      const ctx1 = document.getElementById("chartLiveVsAnalysed").getContext("2d");
+      const analysedTotal = Math.round((data.ml_predicted_price ?? data.predicted_price ?? 0) * pax);
+      const liveTotal = hasLive ? Math.round(data.live_lowest_price * pax) : 0;
+
+      charts.liveVsAnalysed = new Chart(ctx1, {
+        type: "bar",
+        data: {
+          labels: hasLive ? [`${airlineClean} Analysed`, `${airlineClean} Live`] : [`${airlineClean} Analysed`],
+          datasets: [{
+            data: hasLive ? [analysedTotal, liveTotal] : [analysedTotal],
+            backgroundColor: hasLive ? ["#06b6d4", "#10b981"] : ["#06b6d4"],
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { callback: v => "₹" + v.toLocaleString("en-IN") } }
+          }
+        }
+      });
+
+      // 2. All-Airline Comparison Bar Chart
+      if (charts.airlines) charts.airlines.destroy();
+      const ctx2 = document.getElementById("chartAirlines").getContext("2d");
+      const airlineArr = data.airline_comparison || [];
+
+      charts.airlines = new Chart(ctx2, {
+        type: "bar",
+        data: {
+          labels: airlineArr.map(a => a.airline),
+          datasets: [{
+            data: airlineArr.map(a => Math.round(a.price * pax)),
+            backgroundColor: airlineArr.map((a, i) =>
+              a.airline === airlineClean ? "#06b6d4" : i === 0 ? "#10b981" : "#475569"
+            ),
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { callback: v => "₹" + v.toLocaleString("en-IN") } }
+          }
+        }
+      });
+
+      // 3. 45-Day Booking Window Trend Line Chart
+      if (charts.bookingTrend) charts.bookingTrend.destroy();
+      const ctx3 = document.getElementById("chartBookingTrend").getContext("2d");
+      const trendArr = data.booking_trend || [];
+
+      charts.bookingTrend = new Chart(ctx3, {
+        type: "line",
+        data: {
+          labels: trendArr.map(t => `${t.days_left}d`),
+          datasets: [{
+            label: `${airlineClean} Trend`,
+            data: trendArr.map(t => Math.round(t.price * pax)),
+            borderColor: "#22d3ee",
+            backgroundColor: "rgba(34, 211, 238, 0.16)",
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4,
+            pointBackgroundColor: "#22d3ee"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { callback: v => "₹" + v.toLocaleString("en-IN") } }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
